@@ -1,9 +1,9 @@
 import copy
-
 import os
+
 import numpy as np
 import tensorflow as tf
-from colorama import Fore, Style, init, deinit
+from colorama import Fore, Style, deinit, init
 from keras.models import load_model
 
 from src.Utils import Expected_Value

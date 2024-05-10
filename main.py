@@ -6,9 +6,10 @@ import tensorflow as tf
 from colorama import Fore, Style
 
 from src.DataProviders.SbrOddsProvider import SbrOddsProvider
-from src.Predict import NN_Runner, XGBoost_Runner
 from src.Utils.Dictionaries import team_index_current
-from src.Utils.tools import create_todays_games_from_odds, get_json_data, to_data_frame, get_todays_games_json, create_todays_games
+from src.Utils.tools import (create_todays_games,
+                             create_todays_games_from_odds, get_json_data,
+                             get_todays_games_json, to_data_frame)
 
 todays_games_url = 'https://data.nba.com/data/10s/v2015/json/mobile_teams/nba/2023/scores/00_todays_scores.json'
 data_url = 'https://stats.nba.com/stats/leaguedashteamstats?' \
@@ -43,10 +44,20 @@ def createTodaysGames(games, df, odds):
             away_team_odds.append(game_odds[away_team]['money_line_odds'])
 
         else:
-            todays_games_uo.append(input(home_team + ' vs ' + away_team + ': '))
+            todays_games_uo.append(
+                input(home_team + ' vs ' + away_team + ' under over number of points (EU format): ')
+            )
 
-            home_team_odds.append(input(home_team + ' odds: '))
-            away_team_odds.append(input(away_team + ' odds: '))
+            home_team_odds.append(
+                convert_to_american(
+                input(home_team + ' odds (EU format): ')
+                )
+            )
+            away_team_odds.append(
+                convert_to_american(
+                input(away_team + ' odds (EU format): ')
+                )
+            )
 
         # calculate days rest for both teams
         schedule_df = pd.read_csv('Data/nba-2023-UTC.csv', parse_dates=['Date'], date_format='%d/%m/%Y %H:%M')
@@ -84,6 +95,18 @@ def createTodaysGames(games, df, odds):
 
     return data, todays_games_uo, frame_ml, home_team_odds, away_team_odds
 
+def convert_to_european(odds):
+    if odds < 0:
+        return round((100 / abs(odds)) + 1, 2)
+    else:
+        return round((odds / 100) + 1, 2)
+    
+def convert_to_american(odds):
+    odds = float(odds)
+    if odds > 2:
+        return round((odds - 1) * 100)
+    else:
+        return round(-100 / (odds - 1))
 
 def main():
     odds = None
@@ -103,6 +126,7 @@ def main():
             for g in odds.keys():
                 home_team, away_team = g.split(":")
                 print(f"{away_team} ({odds[g][away_team]['money_line_odds']}) @ {home_team} ({odds[g][home_team]['money_line_odds']})")
+                print(f"{away_team} ({convert_to_european(odds[g][away_team]['money_line_odds'])}) @ {home_team} ({convert_to_european(odds[g][home_team]['money_line_odds'])}) in European format")
     else:
         data = get_todays_games_json(todays_games_url)
         games = create_todays_games(data)
@@ -110,15 +134,18 @@ def main():
     df = to_data_frame(data)
     data, todays_games_uo, frame_ml, home_team_odds, away_team_odds = createTodaysGames(games, df, odds)
     if args.nn:
+        from src.Predict import NN_Runner
         print("------------Neural Network Model Predictions-----------")
         data = tf.keras.utils.normalize(data, axis=1)
         NN_Runner.nn_runner(data, todays_games_uo, frame_ml, games, home_team_odds, away_team_odds, args.kc)
         print("-------------------------------------------------------")
-    if args.xgb:
+    if args.xgb:  
+        from src.Predict import XGBoost_Runner
         print("---------------XGBoost Model Predictions---------------")
         XGBoost_Runner.xgb_runner(data, todays_games_uo, frame_ml, games, home_team_odds, away_team_odds, args.kc)
         print("-------------------------------------------------------")
     if args.A:
+        from src.Predict import NN_Runner, XGBoost_Runner
         print("---------------XGBoost Model Predictions---------------")
         XGBoost_Runner.xgb_runner(data, todays_games_uo, frame_ml, games, home_team_odds, away_team_odds, args.kc)
         print("-------------------------------------------------------")

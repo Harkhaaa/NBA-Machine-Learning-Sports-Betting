@@ -1,13 +1,13 @@
 import copy
-
 import os
+
 import numpy as np
 import pandas as pd
 import xgboost as xgb
-from colorama import Fore, Style, init, deinit
+from colorama import Fore, Style, deinit, init
+
 from src.Utils import Expected_Value
 from src.Utils import Kelly_Criterion as kc
-
 
 # from src.Utils.Dictionaries import team_index_current
 # from src.Utils.tools import get_json_data, to_data_frame, get_todays_games_json, create_todays_games

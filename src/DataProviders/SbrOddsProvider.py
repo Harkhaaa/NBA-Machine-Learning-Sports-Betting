@@ -20,7 +20,7 @@ class SbrOddsProvider:
             dictionary: [home_team_name + ':' + away_team_name: { home_team: money_line_odds, away_team: money_line_odds }, under_over_odds: val]
         """
         dict_res = {}
-        for game in self.games:
+        for game in self.games:            
             # Get team names
             home_team_name = game['home_team'].replace("Los Angeles Clippers", "LA Clippers")
             away_team_name = game['away_team'].replace("Los Angeles Clippers", "LA Clippers")
